@@ -1,0 +1,82 @@
+# Ultralytics YOLO 🚀, GPL-3.0 license
+# Builds ultralytics/ultralytics:latest-arm64 image on DockerHub https://hub.docker.com/r/ultralytics/ultralytics
+# Image is aarch64-compatible for Apple M1 and other ARM architectures i.e. Jetson Nano and Raspberry Pi
+
+# Start FROM Ubuntu image https://hub.docker.com/_/ubuntu
+#FROM arm64v8/ubuntu:20.04
+FROM --platform=linux/arm64 nvcr.io/nvidia/l4t-pytorch:r32.5.0-pth1.7-py3
+
+# Downloads to user config dir
+#ADD https://ultralytics.com/assets/Arial.ttf https://ultralytics.com/assets/Arial.Unicode.ttf /root/.config/Ultralytics/
+ADD Arial.ttf Arial.Unicode.ttf /root/.config/Ultralytics/
+
+# Install linux packages
+ENV DEBIAN_FRONTEND noninteractive
+RUN apt update
+RUN TZ=Etc/UTC apt install -y tzdata
+RUN apt remove -y python3 python3-dev python3-pip python3.6 python3.6-dev 
+RUN apt autoremove -y
+RUN apt install -y python3.7 python3.7-dev 
+RUN apt update
+RUN apt install -y python3.7-distutils
+RUN wget https://bootstrap.pypa.io/get-pip.py
+RUN python3.7 get-pip.py
+RUN ln -sf /usr/bin/python3.7 /usr/bin/python
+RUN ln -sf /usr/bin/python3.7 /usr/bin/python3
+RUN apt install --no-install-recommends -y python3-pip git zip curl htop gcc libgl1-mesa-glx libglib2.0-0 libpython3-dev
+# RUN alias python=python3
+
+
+# Install pytorch
+
+# get a fresh start
+RUN apt-get update
+RUN apt-get upgrade -y
+# the dependencies
+RUN apt-get install -y ninja-build git cmake
+RUN apt-get install -y libjpeg-dev libopenmpi-dev libomp-dev ccache
+RUN apt-get install -y libopenblas-dev libblas-dev libeigen3-dev
+RUN pip3 install -U --user wheel mock pillow
+RUN pip3 install testresources
+# above 58.3.0 you get version issues
+RUN pip3 install setuptools==58.3.0
+RUN pip3 install scikit-build
+# download PyTorch 1.13.0 with all its libraries
+RUN git clone -b v1.13.0 --depth=1 --recursive https://github.com/pytorch/pytorch.git
+RUN cd pytorch
+# one command to install several dependencies in one go
+# installs future, numpy, pyyaml, requests
+# setuptools, six, typing_extensions, dataclasses
+RUN pip3 install -r requirements.txt
+
+
+
+# Create working directory
+RUN mkdir -p /usr/src/ultralytics
+WORKDIR /usr/src/ultralytics
+
+# Copy contents
+# COPY . /usr/src/app  (issues as not a .git directory)
+RUN git clone https://github.com/ultralytics/ultralytics /usr/src/ultralytics
+
+# Install pip packages
+COPY requirements.txt .
+RUN python3 -m pip install --upgrade pip wheel
+RUN python3 -m pip install -e '.[dev]'
+#RUN pip install --no-cache ultralytics gsutil notebook \
+#    tensorflow-aarch64 
+    # tensorflowjs \
+    # onnx onnx-simplifier onnxruntime \
+    # coremltools openvino-dev \
+
+# Cleanup
+ENV DEBIAN_FRONTEND teletype
+
+
+# Usage Examples -------------------------------------------------------------------------------------------------------
+
+# Build and Push
+# t=ultralytics/ultralytics:latest-arm64 && sudo docker build --platform linux/arm64 -f docker/Dockerfile-arm64 -t $t . && sudo docker push $t
+
+# Pull and Run
+# t=ultralytics/ultralytics:latest-arm64 && sudo docker pull $t && sudo docker run -it --ipc=host -v "$(pwd)"/datasets:/usr/src/datasets $t
