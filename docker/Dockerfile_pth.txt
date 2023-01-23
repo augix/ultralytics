@@ -7,8 +7,8 @@
 FROM --platform=linux/arm64 nvcr.io/nvidia/l4t-pytorch:r32.5.0-pth1.7-py3
 
 # Downloads to user config dir
-#ADD https://ultralytics.com/assets/Arial.ttf https://ultralytics.com/assets/Arial.Unicode.ttf /root/.config/Ultralytics/
-ADD Arial.ttf Arial.Unicode.ttf /root/.config/Ultralytics/
+ADD https://ultralytics.com/assets/Arial.ttf https://ultralytics.com/assets/Arial.Unicode.ttf /root/.config/Ultralytics/
+#ADD Arial.ttf Arial.Unicode.ttf /root/.config/Ultralytics/
 
 # Install linux packages
 ENV DEBIAN_FRONTEND noninteractive
@@ -24,7 +24,7 @@ RUN python3.7 get-pip.py
 RUN ln -sf /usr/bin/python3.7 /usr/bin/python
 RUN ln -sf /usr/bin/python3.7 /usr/bin/python3
 RUN apt install --no-install-recommends -y python3-pip git zip curl htop gcc libgl1-mesa-glx libglib2.0-0 libpython3-dev
-# RUN alias python=python3
+RUN alias python=python3
 
 
 # Install pytorch
